@@ -2,33 +2,38 @@ import java.util.*;
 
 public class week1and2 {
 
-    static HashMap<String, Integer> users = new HashMap<>();
-    static HashMap<String, Integer> attempts = new HashMap<>();
+    static HashMap<String, Integer> stock = new HashMap<>();
+    static LinkedList<Integer> waitingList = new LinkedList<>();
 
-    public static boolean checkAvailability(String username) {
-        attempts.put(username, attempts.getOrDefault(username, 0) + 1);
-        return !users.containsKey(username);
+    public static int checkStock(String productId) {
+        return stock.getOrDefault(productId, 0);
     }
 
-    public static List<String> suggestAlternatives(String username) {
-        List<String> suggestions = new ArrayList<>();
+    public static String purchaseItem(String productId, int userId) {
 
-        for(int i=1;i<=3;i++){
-            suggestions.add(username + i);
+        int currentStock = stock.getOrDefault(productId, 0);
+
+        if(currentStock > 0){
+            stock.put(productId, currentStock - 1);
+            return "Success, " + (currentStock - 1) + " units remaining";
         }
-
-        suggestions.add(username.replace("_","."));
-        return suggestions;
+        else{
+            waitingList.add(userId);
+            return "Added to waiting list, position #" + waitingList.size();
+        }
     }
 
     public static void main(String[] args) {
 
-        users.put("john_doe",101);
-        users.put("admin",102);
+        stock.put("IPHONE15_256GB", 5);
 
-        System.out.println("john_doe available: " + checkAvailability("john_doe"));
-        System.out.println("jane_smith available: " + checkAvailability("jane_smith"));
+        System.out.println("Stock: " + checkStock("IPHONE15_256GB"));
 
-        System.out.println("Suggestions for john_doe: " + suggestAlternatives("john_doe"));
+        System.out.println(purchaseItem("IPHONE15_256GB",12345));
+        System.out.println(purchaseItem("IPHONE15_256GB",67890));
+        System.out.println(purchaseItem("IPHONE15_256GB",11111));
+        System.out.println(purchaseItem("IPHONE15_256GB",22222));
+        System.out.println(purchaseItem("IPHONE15_256GB",33333));
+        System.out.println(purchaseItem("IPHONE15_256GB",44444));
     }
 }
