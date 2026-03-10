@@ -2,57 +2,67 @@ import java.util.*;
 
 public class week1and2 {
 
-    static class DNSEntry {
-        String ip;
-        long expiryTime;
+    static HashMap<String, Set<String>> ngramIndex = new HashMap<>();
 
-        DNSEntry(String ip, int ttl) {
-            this.ip = ip;
-            this.expiryTime = System.currentTimeMillis() + (ttl * 1000);
+    public static List<String> generateNgrams(String text, int n) {
+        String[] words = text.split(" ");
+        List<String> ngrams = new ArrayList<>();
+
+        for (int i = 0; i <= words.length - n; i++) {
+            StringBuilder gram = new StringBuilder();
+            for (int j = 0; j < n; j++) {
+                gram.append(words[i + j]).append(" ");
+            }
+            ngrams.add(gram.toString().trim());
         }
+        return ngrams;
+    }
 
-        boolean isExpired() {
-            return System.currentTimeMillis() > expiryTime;
+    public static void indexDocument(String docId, String text) {
+        List<String> ngrams = generateNgrams(text, 3);
+
+        for (String gram : ngrams) {
+            ngramIndex.putIfAbsent(gram, new HashSet<>());
+            ngramIndex.get(gram).add(docId);
         }
     }
 
-    static HashMap<String, DNSEntry> cache = new HashMap<>();
-    static int hits = 0;
-    static int misses = 0;
+    public static void analyzeDocument(String docId, String text) {
 
-    public static String resolve(String domain) {
+        List<String> ngrams = generateNgrams(text, 3);
+        HashMap<String, Integer> matchCount = new HashMap<>();
 
-        if (cache.containsKey(domain)) {
-            DNSEntry entry = cache.get(domain);
+        for (String gram : ngrams) {
 
-            if (!entry.isExpired()) {
-                hits++;
-                return "Cache HIT → " + entry.ip;
+            if (ngramIndex.containsKey(gram)) {
+                for (String existingDoc : ngramIndex.get(gram)) {
+
+                    if (!existingDoc.equals(docId)) {
+                        matchCount.put(existingDoc,
+                                matchCount.getOrDefault(existingDoc, 0) + 1);
+                    }
+                }
             }
         }
 
-        misses++;
-        String newIP = "172.217.14." + new Random().nextInt(255);
-        cache.put(domain, new DNSEntry(newIP, 5));
+        for (String doc : matchCount.keySet()) {
+            int matches = matchCount.get(doc);
+            double similarity = (matches * 100.0) / ngrams.size();
 
-        return "Cache MISS → New IP: " + newIP;
-    }
-
-    public static void getStats() {
-        int total = hits + misses;
-        double hitRate = total == 0 ? 0 : (hits * 100.0 / total);
-
-        System.out.println("Hits: " + hits);
-        System.out.println("Misses: " + misses);
-        System.out.println("Hit Rate: " + hitRate + "%");
+            System.out.println("Matched with: " + doc);
+            System.out.println("Similarity: " + similarity + "%");
+        }
     }
 
     public static void main(String[] args) {
 
-        System.out.println(resolve("google.com"));
-        System.out.println(resolve("google.com"));
-        System.out.println(resolve("facebook.com"));
+        String doc1 = "java is a programming language used for software development";
+        String doc2 = "python is a programming language used for machine learning";
+        String newDoc = "java is a programming language used for development";
 
-        getStats();
+        indexDocument("doc1", doc1);
+        indexDocument("doc2", doc2);
+
+        analyzeDocument("doc3", newDoc);
     }
 }
