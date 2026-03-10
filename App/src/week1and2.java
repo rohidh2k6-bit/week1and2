@@ -2,33 +2,45 @@ import java.util.*;
 
 public class week1and2 {
 
-    static HashMap<String, Integer> users = new HashMap<>();
-    static HashMap<String, Integer> attempts = new HashMap<>();
+    static HashMap<String, Integer> pageViews = new HashMap<>();
+    static HashMap<String, Set<String>> uniqueVisitors = new HashMap<>();
+    static HashMap<String, Integer> trafficSources = new HashMap<>();
 
-    public static boolean checkAvailability(String username) {
-        attempts.put(username, attempts.getOrDefault(username, 0) + 1);
-        return !users.containsKey(username);
+    public static void processEvent(String url, String userId, String source) {
+
+        pageViews.put(url, pageViews.getOrDefault(url, 0) + 1);
+
+        uniqueVisitors.putIfAbsent(url, new HashSet<>());
+        uniqueVisitors.get(url).add(userId);
+
+        trafficSources.put(source, trafficSources.getOrDefault(source, 0) + 1);
     }
 
-    public static List<String> suggestAlternatives(String username) {
-        List<String> suggestions = new ArrayList<>();
+    public static void getDashboard() {
 
-        for(int i=1;i<=3;i++){
-            suggestions.add(username + i);
+        System.out.println("Top Pages:");
+
+        for (String url : pageViews.keySet()) {
+            int views = pageViews.get(url);
+            int unique = uniqueVisitors.get(url).size();
+
+            System.out.println(url + " - " + views + " views (" + unique + " unique)");
         }
 
-        suggestions.add(username.replace("_","."));
-        return suggestions;
+        System.out.println("\nTraffic Sources:");
+
+        for (String src : trafficSources.keySet()) {
+            System.out.println(src + ": " + trafficSources.get(src));
+        }
     }
 
     public static void main(String[] args) {
 
-        users.put("john_doe",101);
-        users.put("admin",102);
+        processEvent("/article/breaking-news","user123","google");
+        processEvent("/article/breaking-news","user456","facebook");
+        processEvent("/sports/championship","user789","direct");
+        processEvent("/sports/championship","user123","google");
 
-        System.out.println("john_doe available: " + checkAvailability("john_doe"));
-        System.out.println("jane_smith available: " + checkAvailability("jane_smith"));
-
-        System.out.println("Suggestions for john_doe: " + suggestAlternatives("john_doe"));
+        getDashboard();
     }
 }
