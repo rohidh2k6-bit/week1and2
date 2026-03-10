@@ -2,67 +2,45 @@ import java.util.*;
 
 public class week1and2 {
 
-    static HashMap<String, Set<String>> ngramIndex = new HashMap<>();
+    static HashMap<String, Integer> pageViews = new HashMap<>();
+    static HashMap<String, Set<String>> uniqueVisitors = new HashMap<>();
+    static HashMap<String, Integer> trafficSources = new HashMap<>();
 
-    public static List<String> generateNgrams(String text, int n) {
-        String[] words = text.split(" ");
-        List<String> ngrams = new ArrayList<>();
+    public static void processEvent(String url, String userId, String source) {
 
-        for (int i = 0; i <= words.length - n; i++) {
-            StringBuilder gram = new StringBuilder();
-            for (int j = 0; j < n; j++) {
-                gram.append(words[i + j]).append(" ");
-            }
-            ngrams.add(gram.toString().trim());
-        }
-        return ngrams;
+        pageViews.put(url, pageViews.getOrDefault(url, 0) + 1);
+
+        uniqueVisitors.putIfAbsent(url, new HashSet<>());
+        uniqueVisitors.get(url).add(userId);
+
+        trafficSources.put(source, trafficSources.getOrDefault(source, 0) + 1);
     }
 
-    public static void indexDocument(String docId, String text) {
-        List<String> ngrams = generateNgrams(text, 3);
+    public static void getDashboard() {
 
-        for (String gram : ngrams) {
-            ngramIndex.putIfAbsent(gram, new HashSet<>());
-            ngramIndex.get(gram).add(docId);
-        }
-    }
+        System.out.println("Top Pages:");
 
-    public static void analyzeDocument(String docId, String text) {
+        for (String url : pageViews.keySet()) {
+            int views = pageViews.get(url);
+            int unique = uniqueVisitors.get(url).size();
 
-        List<String> ngrams = generateNgrams(text, 3);
-        HashMap<String, Integer> matchCount = new HashMap<>();
-
-        for (String gram : ngrams) {
-
-            if (ngramIndex.containsKey(gram)) {
-                for (String existingDoc : ngramIndex.get(gram)) {
-
-                    if (!existingDoc.equals(docId)) {
-                        matchCount.put(existingDoc,
-                                matchCount.getOrDefault(existingDoc, 0) + 1);
-                    }
-                }
-            }
+            System.out.println(url + " - " + views + " views (" + unique + " unique)");
         }
 
-        for (String doc : matchCount.keySet()) {
-            int matches = matchCount.get(doc);
-            double similarity = (matches * 100.0) / ngrams.size();
+        System.out.println("\nTraffic Sources:");
 
-            System.out.println("Matched with: " + doc);
-            System.out.println("Similarity: " + similarity + "%");
+        for (String src : trafficSources.keySet()) {
+            System.out.println(src + ": " + trafficSources.get(src));
         }
     }
 
     public static void main(String[] args) {
 
-        String doc1 = "java is a programming language used for software development";
-        String doc2 = "python is a programming language used for machine learning";
-        String newDoc = "java is a programming language used for development";
+        processEvent("/article/breaking-news","user123","google");
+        processEvent("/article/breaking-news","user456","facebook");
+        processEvent("/sports/championship","user789","direct");
+        processEvent("/sports/championship","user123","google");
 
-        indexDocument("doc1", doc1);
-        indexDocument("doc2", doc2);
-
-        analyzeDocument("doc3", newDoc);
+        getDashboard();
     }
 }
